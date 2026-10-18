@@ -26,7 +26,7 @@ ml-lab/
 ## Установка
 
 ```bash
-git clone <GITHUB_REPOSITORY_URL>
+git clone https://github.com/Userrewq/ml-lab
 cd ml-lab
 
 python3 -m venv .venv
