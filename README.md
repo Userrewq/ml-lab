@@ -9,7 +9,7 @@
 ## Структура проекта
 
 ```text
-ml-project/
+ml-lab/
 ├── data/
 │   ├── raw/              # Исходные CSV
 │   └── *.csv             # Объединённые датасеты
@@ -27,7 +27,7 @@ ml-project/
 
 ```bash
 git clone <GITHUB_REPOSITORY_URL>
-cd ml-project
+cd ml-lab
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -73,10 +73,10 @@ jupyter notebook
 ```
 
 Откройте ноутбук из каталога `notebooks/`.
+### Ноутбук 01_data_analysis.ipynb
+Выводит информацию о распределении классов в датасете. Перед запуском необходимо в переменной path указать путь к датасету.
 
 ## Воспроизводимость и безопасность
 
 - Используйте зависимости из `requirements.txt`.
-- Фиксируйте `random_state` и параметры экспериментов.
-- Оценивайте модели по Precision, Recall и F1-score.
 - Не загружайте в Git датасеты, виртуальное окружение и секреты.
