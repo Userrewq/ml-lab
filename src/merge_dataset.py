@@ -1,99 +1,69 @@
-
-from pathlib import Path
-from datetime import datetime
-import argparse
-
+import os
+import glob
 import pandas as pd
 
+RAW_DIR = 'raw'
+BENIGN_DIR = os.path.join(RAW_DIR, 'benign')
+MALICIOUS_DIR = os.path.join(RAW_DIR, 'malicious')
 
-def main():
-    project_dir = Path(__file__).resolve().parent.parent
-    input_dir = project_dir / "data" / "raw"
+malicious_subdirs = [
+    "tcp_over_dns", "ozymandns", "iodine", "dnsexfiltrator_modified",
+    "dnspot", "dnsexfiltrator", "dnscat2", "dns2tcp", "cobaltstrike"
+]
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = project_dir / "data" / f"combined_dataset_{timestamp}.csv"
+def load_csvs_from_subdirs(base_dir, subdirs):
+    dfs = []
+    for subdir in subdirs:
+        path = os.path.join(base_dir, subdir)
+        if os.path.exists(path):
+            files = glob.glob(os.path.join(path, '*.csv'))
+            for f in files:
+                df = pd.read_csv(f)
+                dfs.append(df)
+    return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
-    parser = argparse.ArgumentParser(
-        description="Объединение CSV-файлов DNS Tunneling Dataset"
-    )
-    parser.add_argument(
-        "--chunksize",
-        type=int,
-        default=100_000,
-        help="Количество строк за один проход",
-    )
-    args = parser.parse_args()
+group1_subdirs = malicious_subdirs[:5]
+group2_subdirs = malicious_subdirs[5:]
 
-    if not input_dir.is_dir():
-        parser.error(f"Каталог не найден: {input_dir}")
+print(f"Dataset 1 malicious subdirs: {group1_subdirs}")
+print(f"Dataset 2 malicious subdirs: {group2_subdirs}")
 
-    if args.chunksize <= 0:
-        parser.error("--chunksize должен быть больше нуля")
+malicious1_df = load_csvs_from_subdirs(MALICIOUS_DIR, group1_subdirs)
+malicious2_df = load_csvs_from_subdirs(MALICIOUS_DIR, group2_subdirs)
 
-    files = sorted(input_dir.rglob("*.csv"))
+benign_df = pd.concat([pd.read_csv(f) for f in glob.glob(os.path.join(BENIGN_DIR, '*.csv'))], ignore_index=True)
 
-    if not files:
-        parser.error(f"В каталоге {input_dir} нет CSV-файлов")
+n_mal1 = len(malicious1_df)
+n_mal2 = len(malicious2_df)
+n_benign = len(benign_df)
 
-    expected_columns = None
-    total_rows = 0
-    processed_files = 0
+print(f"\nMalicious group 1: {n_mal1}")
+print(f"Malicious group 2: {n_mal2}")
+print(f"Benign total: {n_benign}")
 
-    try:
-        for file in files:
-            print(f"Обработка: {file}")
+if n_mal1 + n_mal2 > n_benign:
+    raise ValueError(f"Недостаточно benign примеров: нужно {n_mal1 + n_mal2}, есть {n_benign}")
 
-            parts = {part.lower() for part in file.parts}
+benign_head = benign_df.head(n_mal1)
+benign_tail_start = n_mal1
 
-            if "benign" in parts:
-                inferred_label = "Benign"
-            elif "malicious" in parts:
-                inferred_label = "Malicious"
-            else:
-                inferred_label = None
+if benign_tail_start + n_mal2 > n_benign:
+    benign_tail_start = n_mal1 + 1
+    if benign_tail_start + n_mal2 > n_benign:
+        raise ValueError("Невозможно избежать пересечения при текущем распределении")
 
-            try:
-                for chunk in pd.read_csv(file, chunksize=args.chunksize):
-                    if "label" not in chunk.columns:
-                        if inferred_label is None:
-                            raise ValueError(
-                                f"Не удалось определить label для {file}"
-                            )
-                        chunk["label"] = inferred_label
+benign_tail = benign_df.iloc[benign_tail_start:benign_tail_start + n_mal2]
 
-                    if expected_columns is None:
-                        expected_columns = list(chunk.columns)
-                    elif set(chunk.columns) != set(expected_columns):
-                        raise ValueError(
-                            f"Набор столбцов отличается в файле: {file}"
-                        )
+dataset1 = pd.concat([malicious1_df, benign_head], ignore_index=True)
+dataset2 = pd.concat([malicious2_df, benign_tail], ignore_index=True)
 
-                    chunk = chunk[expected_columns]
-                    chunk.to_csv(
-                        output_file,
-                        mode="a",
-                        header=(total_rows == 0),
-                        index=False,
-                    )
-                    total_rows += len(chunk)
+dataset1 = dataset1.sample(frac=1, random_state=42).reset_index(drop=True)
+dataset2 = dataset2.sample(frac=1, random_state=42).reset_index(drop=True)
 
-                processed_files += 1
+dataset1.to_csv('dataset_1.csv', index=False)
+dataset2.to_csv('dataset_2.csv', index=False)
 
-            except pd.errors.EmptyDataError:
-                print(f"Пустой файл пропущен: {file}")
-
-        if total_rows == 0:
-            raise ValueError("В исходных файлах нет строк")
-
-    except Exception:
-        output_file.unlink(missing_ok=True)
-        raise
-
-    print("\nОбъединение завершено.")
-    print(f"Обработано файлов: {processed_files}")
-    print(f"Всего строк: {total_rows:,}")
-    print(f"Результат: {output_file}")
-
-
-if __name__ == "__main__":
-    main()
+print(f"\nDataset 1: {len(dataset1)} rows -> dataset_1.csv")
+print(f"Dataset 2: {len(dataset2)} rows -> dataset_2.csv")
+print(f"\nClass distribution (dataset 1):\n{dataset1['label'].value_counts()}")
+print(f"\nClass distribution (dataset 2):\n{dataset2['label'].value_counts()}")
