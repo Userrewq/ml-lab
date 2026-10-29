@@ -2,7 +2,7 @@ import os
 import glob
 import pandas as pd
 
-RAW_DIR = 'raw'
+RAW_DIR = 'data/raw'
 BENIGN_DIR = os.path.join(RAW_DIR, 'benign')
 MALICIOUS_DIR = os.path.join(RAW_DIR, 'malicious')
 

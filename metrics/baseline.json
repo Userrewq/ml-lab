@@ -1,0 +1,27 @@
+{
+  "data_version_sha256": "7c14bfcbf4d5c2a8f06e5dd0095a70c3b95d27dd8898e47f340f3887436a6d4c",
+  "model": "LogisticRegression",
+  "parameters": {
+    "max_iter": 1000,
+    "random_state": 42
+  },
+  "train_time_seconds": 267.3,
+  "test_size": 376421,
+  "main_metric": "F1-weighted",
+  "main_metric_value": 0.9795,
+  "accuracy": 0.9796,
+  "per_class_metrics": {
+    "Benign (0)": {
+      "precision": 0.9945,
+      "recall": 0.9645,
+      "f1-score": 0.9792,
+      "support": 188211.0
+    },
+    "Malicious (1)": {
+      "precision": 0.9655,
+      "recall": 0.9946,
+      "f1-score": 0.9799,
+      "support": 188210.0
+    }
+  }
+}

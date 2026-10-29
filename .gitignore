@@ -8,10 +8,6 @@ data/
 
 tests/data
 
-models/
-
-metrics/
-
 .env
 *.pem
 *.key
