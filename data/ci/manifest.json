@@ -1,0 +1,52 @@
+{
+  "dataset_version": "dns-ci-control-v1",
+  "source": "data/X_test_v1.csv and data/y_test_v1.csv",
+  "selection": {
+    "method": "stratified train_test_split",
+    "random_state": 42,
+    "sample_count": 1000
+  },
+  "rows": 1000,
+  "feature_count": 31,
+  "features": [
+    "src_port",
+    "dst_port",
+    "duration",
+    "total_bytes",
+    "receiving_bytes",
+    "sending_bytes",
+    "packets_rate",
+    "packets_len_rate",
+    "min_packets_len",
+    "max_packets_len",
+    "mean_packets_len",
+    "standard_deviation_packets_len",
+    "variance_packets_len",
+    "coefficient_of_variation_packets_len",
+    "dns_domain_name_length",
+    "dns_subdomain_name_length",
+    "numerical_percentage",
+    "character_entropy",
+    "max_continuous_numeric_len",
+    "max_continuous_alphabet_len",
+    "max_continuous_consonants_len",
+    "max_continuous_same_alphabet_len",
+    "vowels_consonant_ratio",
+    "conv_freq_vowels_consonants",
+    "distinct_ttl_values",
+    "ttl_values_min",
+    "ttl_values_max",
+    "ttl_values_mean",
+    "ttl_values_mode",
+    "ttl_values_median",
+    "distinct_A_records"
+  ],
+  "classes": {
+    "0": 500,
+    "1": 500
+  },
+  "files": {
+    "control_X.csv": "af071495b7ea46821c185618b453ece37119414160bc80fd0be44da819bf8eb4",
+    "control_y.csv": "58ac56fe52e6e92a3bd25e2421b870797cda74683c4d686438da639fe39f6da9"
+  }
+}

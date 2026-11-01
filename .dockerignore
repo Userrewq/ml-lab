@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+.pytest_cache
+.ipynb_checkpoints
+.ipython
+jupyter*
+notebooks
+tests
+data/*
+!data/ci
+!data/ci/**
+*.ipynb
+*.pyc
+.env
+*.pem
+*.key

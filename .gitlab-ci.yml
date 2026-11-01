@@ -1,0 +1,136 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - when: never
+
+stages:
+  - test
+  - quality
+  - data_quality
+  - model_quality
+  - security
+  - container_build
+  - container_security
+
+default:
+  image: python:3.10-slim-trixie
+  tags:
+    - saas-linux-medium-amd64
+  interruptible: true
+  timeout: 20 minutes
+  before_script:
+    - python --version
+    - python -m pip install --no-cache-dir -r requirements-dev.txt
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONUNBUFFERED: "1"
+
+pytest:
+  stage: test
+  script:
+    - mkdir -p reports
+    - pytest -q --junitxml=reports/junit.xml
+  artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: reports/junit.xml
+    paths:
+      - reports/junit.xml
+
+ruff:
+  stage: quality
+  script:
+    - ruff check src tests
+
+bandit:
+  stage: quality
+  script:
+    - bandit -r src -ll
+
+data_quality:
+  stage: data_quality
+  script:
+    - python src/data_quality_gate.py
+
+model_quality:
+  stage: model_quality
+  script:
+    - python src/model_quality_gate.py
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - metrics/model_gate_result.json
+
+pip_audit:
+  stage: security
+  script:
+    - mkdir -p reports
+    - pip-audit -r requirements-dev.txt --format json --output reports/pip-audit.json
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/pip-audit.json
+
+trivy_config:
+  stage: security
+  image:
+    name: aquasec/trivy:0.76.1
+    entrypoint: [""]
+  tags:
+    - saas-linux-medium-amd64
+  before_script: []
+  script:
+    - mkdir -p reports
+    - trivy config --severity HIGH,CRITICAL --exit-code 1 --format json --output reports/trivy-config.json .
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/trivy-config.json
+
+container_build:
+  stage: container_build
+  image:
+    name: moby/buildkit:v0.20.2-rootless
+    entrypoint: [""]
+  tags:
+    - saas-linux-medium-amd64
+  before_script: []
+  variables:
+    BUILDKITD_FLAGS: "--oci-worker-no-process-sandbox"
+  script:
+    - buildctl-daemonless.sh build
+      --frontend dockerfile.v0
+      --local context=.
+      --local dockerfile=.
+      --output type=oci,dest=image.tar
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - image.tar
+
+trivy_image:
+  stage: container_security
+  image:
+    name: aquasec/trivy:0.76.1
+    entrypoint: [""]
+  tags:
+    - saas-linux-medium-amd64
+  before_script: []
+  needs:
+    - job: container_build
+      artifacts: true
+  script:
+    - mkdir -p reports
+    - trivy image --input image.tar --severity CRITICAL --exit-code 1 --format json --output reports/trivy-image.json
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - reports/trivy-image.json

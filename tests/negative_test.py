@@ -50,9 +50,15 @@ def test_wrong_number_of_features(predictor):
     with pytest.raises(ValueError, match="Ожидается .* числовых признаков"):
         predictor.predict(df)
 
-def test_file_exceeds_row_limit(predictor):
+def test_file_exceeds_row_limit(predictor, tmp_path):
+    df = pd.read_csv('tests/data/valid_small.csv')
+    large_df = pd.concat([df] * 1001, ignore_index=True)
+
+    large_file = tmp_path / "exceeds_limit.csv"
+    large_df.to_csv(large_file, index=False)
+
     with pytest.raises(ValueError, match="содержит более .* строк"):
-        predictor.predict('tests/data/exceeds_limit.csv')
+        predictor.predict(str(large_file))
 
 def test_corrupted_file(predictor):
     with pytest.raises(ValueError, match="Не удалось прочитать файл"):

@@ -1,0 +1,12 @@
+{
+  "baseline_version": "dns-ci-baseline-v1",
+  "dataset_version": "dns-ci-control-v1",
+  "main_metric": "f1_weighted",
+  "main_metric_value": 0.9849974645715126,
+  "accuracy": 0.985,
+  "allowed_relative_degradation": 0.05,
+  "minimum_acceptable_value": 0.9357475913429369,
+  "sample_count": 1000,
+  "model": "LogisticRegression ONNX",
+  "seed": 42
+}

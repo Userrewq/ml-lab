@@ -4,10 +4,14 @@ __pycache__/
 
 .ipynb_checkpoints/
 
-data/
+data/*
+!data/ci/
+!data/ci/**
 
-tests/data
 
 .env
 *.pem
 *.key
+
+reports/
+metrics/model_gate_result.json
