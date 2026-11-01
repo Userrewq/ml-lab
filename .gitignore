@@ -1,6 +1,6 @@
 __pycache__/
 
-.venv/
+.venv*/
 
 .ipynb_checkpoints/
 
@@ -13,5 +13,4 @@ data/*
 *.pem
 *.key
 
-reports/
 metrics/model_gate_result.json

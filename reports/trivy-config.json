@@ -1,0 +1,30 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.76.1"
+  },
+  "ReportID": "01a1990e-40f7-7e5e-b673-91507c045f07",
+  "CreatedAt": "2026-11-02T00:40:10.615944204+03:00",
+  "ArtifactID": "sha256:75d47035c4279b510fddc4aa219a51b32599f890014df167bc270755e5928120",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "git@github.com:Userrewq/ml-lab.git",
+    "Branch": "lab3-github-actions",
+    "Commit": "7c9347aa71f33de54ddb55c9a90d483a81bf7f21",
+    "CommitMsg": "Add Lab 3 CI pipeline and quality gates",
+    "Author": "matvey \u003ck.matwey123@gmail.com\u003e",
+    "Committer": "matvey \u003ck.matwey123@gmail.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "Dockerfile",
+      "Class": "config",
+      "Type": "dockerfile",
+      "MisconfSummary": {
+        "Successes": 20,
+        "Failures": 0
+      }
+    }
+  ]
+}
