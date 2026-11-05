@@ -1,0 +1,21 @@
+{
+  "demo_type": "SIMULATED",
+  "description": "Synthetic report for security gate policy demonstration. Not a real vulnerability scan.",
+  "scanner": "Trivy",
+  "Results": [
+    {
+      "Target": "demo-image:latest",
+      "Class": "container",
+      "Type": "debian",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-DEMO-CRITICAL-001",
+          "PkgName": "demo-package",
+          "InstalledVersion": "1.0.0",
+          "Severity": "CRITICAL",
+          "Title": "SIMULATED critical finding for security gate policy test"
+        }
+      ]
+    }
+  ]
+}

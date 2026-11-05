@@ -236,3 +236,18 @@ jobs:
           name: trivy-image-report
           path: trivy-image.json
           if-no-files-found: ignore
+  security_gate_demo:
+    name: Security Gate Demo (SIMULATED)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/lab3-fail-security'
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.18"
+
+      - name: Run simulated security gate policy test
+        run: python security-demo/check_report.py
