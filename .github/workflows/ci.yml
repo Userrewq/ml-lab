@@ -17,10 +17,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  code_quality:
+    name: Ruff and Bandit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.18"
+
+      - name: Install tools
+        run: pip install ruff==0.14.4 bandit==1.9.4
+
+      - name: Ruff
+        run: ruff check src tests
+
+      - name: Bandit
+        run: bandit -r src -ll
+
   tests:
     name: Pytest
     runs-on: ubuntu-latest
+    needs: code_quality
     timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -46,69 +69,12 @@ jobs:
           path: reports/junit.xml
           if-no-files-found: ignore
 
-  code_quality:
-    name: Ruff and Bandit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11.18"
-
-      - run: pip install ruff==0.14.4 bandit==1.9.4
-
-      - name: Ruff
-        run: ruff check src tests
-
-      - name: Bandit
-        run: bandit -r src -ll
-
-  data_quality:
-    name: Dataset quality gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11.18"
-
-      - run: pip install -r requirements-dev.txt
-
-      - name: Validate dataset
-        run: python src/data_quality_gate.py
-
-  model_quality:
-    name: Model quality gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11.18"
-
-      - run: pip install -r requirements-dev.txt
-
-      - name: Evaluate ONNX model
-        run: python src/model_quality_gate.py
-
-      - name: Upload model gate report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: model-quality-report
-          path: metrics/model_gate_result.json
-          if-no-files-found: ignore
-
   dependency_audit:
     name: Dependency security audit
     runs-on: ubuntu-latest
+    needs: tests
     timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
@@ -116,7 +82,8 @@ jobs:
         with:
           python-version: "3.11.18"
 
-      - run: pip install pip-audit==2.10.1
+      - name: Install pip-audit
+        run: pip install pip-audit==2.10.1
 
       - name: Run pip-audit
         run: |
@@ -133,10 +100,58 @@ jobs:
           path: reports/pip-audit.json
           if-no-files-found: ignore
 
+  data_quality:
+    name: Dataset quality gate
+    runs-on: ubuntu-latest
+    needs: dependency_audit
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.18"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Validate dataset
+        run: python src/data_quality_gate.py
+
+  model_quality:
+    name: Model quality gate
+    runs-on: ubuntu-latest
+    needs: data_quality
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.18"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Evaluate ONNX model
+        run: python src/model_quality_gate.py
+
+      - name: Upload model gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-quality-report
+          path: metrics/model_gate_result.json
+          if-no-files-found: ignore
+
   trivy_config:
     name: Trivy configuration scan
     runs-on: ubuntu-latest
+    needs: model_quality
     timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -161,7 +176,9 @@ jobs:
   docker:
     name: Docker build and smoke test
     runs-on: ubuntu-latest
+    needs: trivy_config
     timeout-minutes: 20
+
     steps:
       - uses: actions/checkout@v4
 
@@ -193,6 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
