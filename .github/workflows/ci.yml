@@ -4,10 +4,10 @@ name: DNS Tunneling Detector CI
 on:
   push:
     branches:
-      - lab3-github-actions
+      - lab3-*
   pull_request:
     branches:
-      - lab3-github-actions
+      - lab3-*
 
 permissions:
   contents: read
