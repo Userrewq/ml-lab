@@ -1,0 +1,20 @@
+groups:
+  - name: dns-api-security
+    rules:
+      - alert: DnsApiUnauthorizedBurst
+        expr: sum(increase(dns_api_requests_total{route="/predict",status="401"}[1m])) >= 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Burst of unauthorized prediction requests"
+          description: "At least 3 unauthorized requests to /predict within 1 minute."
+
+      - alert: DnsApiRateLimitBurst
+        expr: sum(increase(dns_api_requests_total{route="/predict",status="429"}[1m])) >= 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Burst of rate-limited prediction requests"
+          description: "At least 3 rate-limited requests to /predict within 1 minute."

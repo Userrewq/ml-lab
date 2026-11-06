@@ -4,3 +4,4 @@ bandit==1.9.4
 pip-audit==2.10.1
 ruff==0.14.4
 setuptools==84.1.0
+httpx==0.28.1
