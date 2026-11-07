@@ -3,11 +3,9 @@ name: DNS Tunneling Detector CI
 on:
   push:
     branches:
-      - lab3-*
-      - lab4-*   # [ЛР4] Добавлена ветка для ЛР4
+      - lab4-*
   pull_request:
     branches:
-      - lab3-*
       - lab4-*
 
 permissions:
@@ -60,7 +58,7 @@ jobs:
       - name: Run tests
         run: |
           mkdir -p reports
-          pytest -q --junitxml=reports/junit.xml
+          python -m pytest -q --junitxml=reports/junit.xml
 
       - name: Upload test report
         if: always()
@@ -70,7 +68,6 @@ jobs:
           path: reports/junit.xml
           if-no-files-found: ignore
 
-  # [ЛР4] НОВЫЙ JOB: API-тесты запускаются параллельно с основными
   api_tests:
     name: API tests
     runs-on: ubuntu-latest
@@ -92,7 +89,7 @@ jobs:
       - name: Run API tests
         run: |
           mkdir -p reports
-          pytest tests/test_api.py -q --junitxml=reports/api-junit.xml
+          python -m pytest tests/test_api.py -q --junitxml=reports/api-junit.xml
 
       - name: Upload API test report
         if: always()
@@ -105,7 +102,7 @@ jobs:
   dependency_audit:
     name: Dependency security audit
     runs-on: ubuntu-latest
-    needs: [tests, api_tests]   # [ЛР4] Зависит от обоих типов тестов
+    needs: [tests, api_tests]
     timeout-minutes: 15
 
     steps:
@@ -218,19 +215,15 @@ jobs:
       - name: Build Docker image
         run: docker build -t dns-tunneling-detector:ci .
 
-      # [ЛР4] ОБНОВЛЁН: Smoke test для FastAPI-приложения
       - name: Run API smoke test
         run: |
-          # Запуск контейнера в фоне с тестовым токеном
           docker run -d --name api-smoke \
             -p 8000:8000 \
             -e API_TOKEN=smoke-test-token \
             dns-tunneling-detector:ci
 
-          # Ожидание запуска uvicorn и загрузки модели
           sleep 8
 
-          # Проверка health endpoint
           curl -sf http://localhost:8000/health || {
             echo "Health check failed. Container logs:"
             docker logs api-smoke
@@ -238,7 +231,6 @@ jobs:
             exit 1
           }
 
-          # Очистка
           docker stop api-smoke && docker rm api-smoke
 
       - name: Verify non-root user
