@@ -57,7 +57,7 @@ X-API-Token: <your-api-token>
     }
   ]
 }
-
+```
 *Пример ответа (успех, HTTP 200):*
 {
   "prediction": [0],
@@ -85,38 +85,36 @@ X-API-Token: <your-api-token>
 # 1. Сборка образа
 docker build -t dns-tunneling-detector:lab4 .
 
-# 2. Запуск контейнера (токен передаётся через переменную окружения)
+#2. Запуск контейнера (токен передаётся через переменную окружения)
 docker run -d --name dns-api \
   -p 8000:8000 \
   -e API_TOKEN="demo-token" \
   dns-tunneling-detector:lab4
 
-# 3. Ожидание загрузки модели и проверки SHA256
-sleep 8
-
-# 4. Проверка готовности
+# 3. Проверка готовности
 curl -s http://localhost:8000/health | python3 -m json.tool
 
-# 5. Проверка запуска от непривилегированного пользователя
+# 4. Проверка запуска от непривилегированного пользователя
 docker exec dns-api id -u
+```
 
 **Запуск через uvicorn**
 
 Для локальной разработки без Docker можно запустить приложение напрямую через `uvicorn`.
 
-#1. Активация виртуального окружения:**
 ```bash
+#1. Активация виртуального окружения:
 source .venv/bin/activate
-#2. Установка зависимостей:**
-```bash
+
+#2. Установка зависимостей:
 pip install -r requirements.txt
-#3. Запуск приложения:**
-```bash
+
+#3. Запуск приложения:
 export API_TOKEN="your-secure-token"
 uvicorn src.api:app --host 127.0.0.1 --port 8000 --reload
+```
 
-
-**Лимиты и ограничения**
+## Лимиты и ограничения
 
 ### Лимиты и ограничения
 
@@ -142,7 +140,7 @@ uvicorn src.api:app --host 127.0.0.1 --port 8000 --reload
 Проверяем, что сервис готов и принимает корректные запросы:
 ```bash
 curl -s -H "X-API-Token: demo-token" http://localhost:8000/health
-
+```
 Ожидаемый ответ: `{"status":"healthy","model_version":"9a98d9820bf7"}`.
 
 Фиксируем начальное значение счётчика отказов:
@@ -150,7 +148,7 @@ curl -s -H "X-API-Token: demo-token" http://localhost:8000/health
 ```bash
 curl -s -H "X-API-Token: demo-token" http://localhost:8000/metrics \
   | grep 'dns_api_requests_total{method="POST",route="/predict",status="401"}'
-
+```
 ### Шаг 2. Генерация аномальной активности
 
 Отправляем серию из 5 запросов с заведомо неверным токеном:
@@ -163,7 +161,7 @@ for i in 1 2 3 4 5; do
     -H "Content-Type: application/json" \
     -d '{"rows":[]}'
 done
-
+```
 Ожидаемый результат: 5 ответов со статусом HTTP 401
 
 ### Шаг 3. Анализ метрик и логов
@@ -173,7 +171,7 @@ done
 ```bash
 curl -s -H "X-API-Token: demo-token" http://localhost:8000/metrics \
   | grep 'dns_api_requests_total{method="POST",route="/predict",status="401"}'
-
+```
 Значение счётчика должно увеличиться на 5.
 
 Просматриваем структурированные логи (токен и содержимое запроса не попадают в логи):
@@ -181,3 +179,4 @@ curl -s -H "X-API-Token: demo-token" http://localhost:8000/metrics \
 ```bash
 docker logs --tail 30 dns-api 2>&1 \
   | grep '"refusal_type": "authentication"'
+```
